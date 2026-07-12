@@ -1,39 +1,27 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
-from sqlmodel import Field, SQLModel, select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-# Importações da nossa estrutura infra/db
-from .infra.db import engine, create_db_and_tables, get_session
-
-
-# Mantido aqui temporariamente até criarmos a pasta modules/
-class SystemConfig(SQLModel, table=True):
-    __tablename__: str = "system_config"
-
-    id: int | None = Field(default=None, primary_key=True)
-    key: str = Field(index=True, unique=True)
-    value: str
+from .infra.db import engine, create_db_and_tables
+from .modules import api_v1_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Chama a função importada para criar as tabelas
     await create_db_and_tables(engine)
     yield
 
 
-app = FastAPI(title="MemoHub - Modular Monolith Architecture", lifespan=lifespan)
+app = FastAPI(
+    title="MemoHub - Modular Monolith Architecture", lifespan=lifespan
+)
 
+app.include_router(api_v1_router)
 
-@app.get("/configs")
-async def get_configs(session: AsyncSession = Depends(get_session)):
-    statement = select(SystemConfig)
-    result = await session.exec(statement)
-    configs = result.all()
-    return configs
-
-
-@app.get("/health")
-def check_health():
-    return {"status": "healthy", "message": "Clean architecture structure initialized"}
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
