@@ -1,147 +1,91 @@
 # MemoHub
 
-> Sua base pessoal de conhecimento.
+> Sua base pessoal de conhecimento estruturada em Pergunta → Resposta.
 
-O **MemoHub** é uma aplicação web para armazenar perguntas e respostas sobre qualquer assunto. A ideia é centralizar informações importantes em um único lugar, permitindo consultar rapidamente dúvidas resolvidas sem precisar pesquisar novamente.
-
-Diferente de um aplicativo de notas tradicional, o MemoHub é organizado no formato **Pergunta → Resposta**, tornando o conhecimento mais fácil de localizar e reutilizar.
-
-## Funcionalidades
-
-* Cadastro de perguntas e respostas.
-* Edição de registros.
-* Exclusão de registros.
-* Pesquisa por título ou pergunta.
-* Organização por categoria.
-* Marcação de favoritos.
-* Ordenação por data de criação.
-
-## Exemplo
-
-**Título**
-
-> Como criar uma API com FastAPI?
-
-**Categoria**
-
-> Programação
-
-**Pergunta**
-
-> Como criar uma rota GET utilizando FastAPI?
-
-**Resposta**
-
-> Utilize o decorador `@app.get()` para definir uma rota que responda às requisições HTTP GET.
+O **MemoHub** é uma aplicação web projetada para centralizar, organizar e recuperar informações importantes com rapidez. Diferente de um aplicativo de notas convencional, o sistema foca no formato pragmático de **Pergunta → Resposta**, funcionando como um repositório dinâmico para dúvidas resolvidas, evitando retrabalho em pesquisas futuras.
 
 ---
 
-**Título**
+## Funcionalidades
 
-> Como cozinhar arroz?
+* **Gerenciamento de Conhecimento:** Criação, leitura, atualização e exclusão (CRUD) de registros.
+* **Busca Avançada:** Pesquisa textual por termos contidos no título ou na pergunta.
+* **Filtro por Contexto:** Organização e filtragem por categorias de assunto.
+* **Favoritos:** Sistema para marcar e desmarcar registros de alta relevância de forma atômica.
+* **Ordenação Cronológica:** Listagem automática priorizando registros mais recentes.
 
-**Categoria**
+---
 
-> Culinária
+## Exemplos Práticos
 
-**Pergunta**
+| Título | Categoria | Pergunta | Resposta |
+| :--- | :--- | :--- | :--- |
+| Como criar uma API com FastAPI? | Programação | Como criar uma rota GET utilizando FastAPI? | Utilize o decorador `@app.get()` para definir uma rota que responda às requisições HTTP GET. |
+| Como cozinhar arroz? | Culinária | Qual a proporção entre arroz e água? | Geralmente utiliza-se uma medida de arroz para duas medidas de água. |
 
-> Qual a proporção entre arroz e água?
+---
 
-**Resposta**
-
-> Geralmente utiliza-se uma medida de arroz para duas medidas de água.
-
-## Tecnologias
+## Stack Tecnológica
 
 ### Backend
-
-* Python
-* FastAPI
-* SQLAlchemy
-* PostgreSQL
+[Para saber mais](./backend/README.md)
 
 ### Frontend
+[Para saber mais](./frontend/README.md)
 
-* Vue.js
-* Axios
-* Vue Router
+### Infraestrutura & DevOps
+[Para saber mais](./backend/README.md)
 
-### Infraestrutura
+---
 
-* Docker
-* Docker Compose
-* AWS EC2
-* AWS RDS PostgreSQL
-* GitHub Actions (CI/CD)
+## Arquitetura do Sistema
 
-## Arquitetura
+A aplicação adota o padrão de **Monolito Modular** no backend, mantendo os domínios de negócio isolados em pacotes auto-contidos para facilitar a coesão e simplificar futuras expansões.
 
+```mermaid
+graph TD
+    classDef client fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b;
+    classDef router fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5a20;
+    classDef domain fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100;
+    classDef db fill:#ede7f6,stroke:#7e57c2,stroke-width:2px,color:#4a148c;
+    classDef infra fill:#f5f5f5,stroke:#9e9e9e,stroke-width:2px,color:#212121;
+
+    Frontend[Frontend Vue.js + Axios]:::client
+    Swagger[Swagger UI Docs]:::client
+
+    subgraph AWS_EC2 [AWS EC2 Instance]
+        subgraph Docker_Container [Docker Container]
+            subgraph Backend_FastAPI [Monolito Modular - FastAPI]
+                Main[main.py]
+                
+                subgraph Infra_DB [Infraestrutura]
+                    Engine[engine.py]
+                    Session[session.py]
+                end
+
+                subgraph Module_Knowledge [Módulo: Knowledge]
+                    Router[router.py]:::router
+                    DTOs[dtos.py]:::domain
+                    Models[models.py]:::domain
+                end
+            end
+        end
+    end
+
+    Postgres[(PostgreSQL - AWS RDS)]:::db
+
+    Frontend -->|Chamadas HTTP /api/v1| Main
+    Swagger -->|Testes de Endpoints| Main
+    Main -->|Registra Rotas| Router
+    Router -->|Injeta Dependência| Session
+    Router -->|Valida Dados| DTOs
+    Router -->|Persiste Entidade| Models
+    Session --> Engine
+    Engine --> Postgres
 ```
-Vue.js
-    │
- Axios
-    │
-FastAPI
-    │
-SQLAlchemy
-    │
-PostgreSQL (AWS RDS)
-```
 
-## Modelo de Dados
+---
 
-A aplicação utiliza apenas uma entidade principal.
+## Licença e Objetivo
 
-| Campo     | Tipo     | Descrição                  |
-| --------- | -------- | -------------------------- |
-| id        | Long     | Identificador              |
-| title     | String   | Título da dúvida           |
-| question  | String   | Pergunta                   |
-| answer    | String   | Resposta                   |
-| category  | String   | Categoria                  |
-| favorite  | Boolean  | Indica se é favorita       |
-| createdAt | DateTime | Data de criação            |
-| updatedAt | DateTime | Data da última atualização |
-
-## Objetivo
-
-O objetivo deste projeto é servir como uma base de conhecimento pessoal, permitindo registrar e consultar informações sobre qualquer tema, como:
-
-* Programação
-* Banco de Dados
-* Redes
-* Cloud Computing
-* Faculdade
-* Trabalho
-* Idiomas
-* Culinária
-* Finanças
-* Saúde
-* Hobbies
-* Qualquer outro assunto de interesse
-
-## API REST
-
-| Método | Endpoint        | Descrição                |
-| ------ | --------------- | ------------------------ |
-| GET    | /knowledge      | Lista todos os registros |
-| GET    | /knowledge/{id} | Busca um registro        |
-| POST   | /knowledge      | Cria um registro         |
-| PUT    | /knowledge/{id} | Atualiza um registro     |
-| DELETE | /knowledge/{id} | Remove um registro       |
-
-## Funcionalidades Futuras
-
-* Upload de imagens.
-* Suporte a Markdown.
-* Busca por palavras-chave.
-* Sistema de tags.
-* Exportação para PDF.
-* Compartilhamento de registros.
-* Login de usuários.
-* Integração com IA para sugerir respostas relacionadas.
-
-## Licença
-
-Este projeto foi desenvolvido para fins acadêmicos, como prática de desenvolvimento Full Stack utilizando FastAPI, Vue.js, Docker, PostgreSQL, AWS e GitHub Actions.
+Este projeto possui caráter exclusivamente acadêmico. Ele foi idealizado e construído como ferramenta prática para o domínio do desenvolvimento Full Stack unindo as tecnologias FastAPI, Vue.js, conteinerização isolada com Docker e deploys automatizados na infraestrutura da AWS usando GitHub Actions.
