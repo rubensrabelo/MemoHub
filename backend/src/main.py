@@ -4,7 +4,7 @@ from sqlmodel import Field, SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 # Importações da nossa estrutura infra/db
-from src.infra.db import engine, create_db_and_tables, get_session
+from .infra.db import engine, create_db_and_tables, get_session
 
 
 # Mantido aqui temporariamente até criarmos a pasta modules/
