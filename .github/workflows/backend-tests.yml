@@ -11,28 +11,30 @@ jobs:
     env:
       PYTHONPATH: src
       DATABASE_URL: sqlite+aiosqlite:///:memory:
+      ASYNC_DATABASE_URL: sqlite+aiosqlite:///:memory:
+      DB_URL: sqlite+aiosqlite:///:memory:
 
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+    - name: Checkout source code
+      uses: actions/checkout@v4
 
-      - name: Setup Python environment
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+    - name: Setup Python environment
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          version: "latest"
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        version: "latest"
 
-      - name: Install backend dependencies
-        run: |
-          cd backend
-          uv sync --frozen
+    - name: Install backend dependencies
+      run: |
+        cd backend
+        uv sync --frozen
 
-      - name: Execute Pytest suite
-        run: |
-          cd backend
-          uv run pytest
+    - name: Execute Pytest suite
+      run: |
+        cd backend
+        uv run pytest
