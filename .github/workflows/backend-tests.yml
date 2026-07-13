@@ -1,0 +1,38 @@
+name: Backend Testing Pipeline
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  backend-test:
+    name: Run FastAPI Tests
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: src
+      DATABASE_URL: "sqlite+aiosqlite:///:memory:"
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup Python environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          version: "latest"
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: uv sync --frozen
+
+      - name: Execute Pytest suite
+        working-directory: backend
+        run: uv run pytest -v
