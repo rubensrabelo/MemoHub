@@ -18,10 +18,11 @@ O **MemoHub** é uma aplicação web projetada para centralizar, organizar e rec
 
 ## Exemplos Práticos
 
-| Título | Categoria | Pergunta | Resposta |
-| :--- | :--- | :--- | :--- |
-| Como criar uma API com FastAPI? | Programação | Como criar uma rota GET utilizando FastAPI? | Utilize o decorador `@app.get()` para definir uma rota que responda às requisições HTTP GET. |
-| Como cozinhar arroz? | Culinária | Qual a proporção entre arroz e água? | Geralmente utiliza-se uma medida de arroz para duas medidas de água. |
+
+| Categoria | Pergunta | Resposta |
+| :--- | :--- | :--- |
+| Programação | Como criar uma rota GET utilizando FastAPI? | Utilize o decorador `@app.get()` para definir uma rota que responda às requisições HTTP GET. |
+| Culinária | Qual a proporção entre arroz e água? | Geralmente utiliza-se uma medida de arroz para duas medidas de água. |
 
 ---
 
