@@ -10,7 +10,26 @@ services:
       - "5432:5432"
     volumes:
       - postgres_dev_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app_user -d memo_hub_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: always
+
+  backend_api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: memo_hub_api
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://app_user:app_password@postgres_db:5432/memo_hub_db
+    depends_on:
+      postgres_db:
+        condition: service_healthy
 
 volumes:
   postgres_dev_data:
