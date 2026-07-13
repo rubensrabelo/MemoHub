@@ -1,0 +1,7 @@
+#!/bin/sh
+
+echo "Aguardando inicialização do banco e aplicando migrações..."
+alembic upgrade head
+
+echo "Iniciando o servidor FastAPI..."
+exec uvicorn src.main:app --host 0.0.0.0 --port 8000
