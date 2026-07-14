@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import { BookOpen, Star, Plus } from '@lucide/vue'
 
 defineProps({
@@ -8,7 +9,13 @@ defineProps({
   }
 })
 
-defineEmits(['navigate', 'new-knowledge'])
+defineEmits(['new-knowledge'])
+
+const router = useRouter()
+
+const navigateTo = (routeName: string) => {
+  router.push({ name: routeName })
+}
 </script>
 
 <template>
@@ -31,7 +38,7 @@ defineEmits(['navigate', 'new-knowledge'])
 
       <nav class="flex flex-col gap-1">
         <button
-          @click="$emit('navigate', 'knowledge')"
+          @click="navigateTo('knowledge')"
           class="w-full h-11 px-3 rounded-xl flex items-center gap-3 font-medium text-sm transition-colors cursor-pointer"
           :class="currentRoute === 'knowledge' 
             ? 'bg-blue-500/10 text-primary dark:bg-blue-500/20 dark:text-blue-400' 
@@ -42,7 +49,7 @@ defineEmits(['navigate', 'new-knowledge'])
         </button>
 
         <button
-          @click="$emit('navigate', 'favorites')"
+          @click="navigateTo('favorites')"
           class="w-full h-11 px-3 rounded-xl flex items-center gap-3 font-medium text-sm transition-colors cursor-pointer"
           :class="currentRoute === 'favorites' 
             ? 'bg-blue-500/10 text-primary dark:bg-blue-500/20 dark:text-blue-400' 
@@ -52,16 +59,6 @@ defineEmits(['navigate', 'new-knowledge'])
           <span>Favoritos</span>
         </button>
       </nav>
-    </div>
-
-    <div class="flex items-center gap-3 p-2 border-t border-slate-100 dark:border-slate-800 pt-4">
-      <div class="w-10 h-10 rounded-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light flex items-center justify-center font-bold text-sm">
-        AO
-      </div>
-      <div class="flex flex-col min-w-0">
-        <span class="text-sm font-semibold text-slate-900 dark:text-white truncate">Ana Oliveira</span>
-        <span class="text-xs text-slate-400 truncate">ana@email.com</span>
-      </div>
     </div>
   </aside>
 </template>
