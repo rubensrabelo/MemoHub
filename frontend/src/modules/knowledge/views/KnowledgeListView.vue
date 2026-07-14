@@ -4,11 +4,13 @@ import { Search } from '@lucide/vue'
 import { knowledgeService } from '../services/knowledgeService'
 import Sidebar from '../../../core/components/Sidebar.vue'
 import KnowledgeCard from '../components/KnowledgeCard.vue'
-import type { KnowledgeResponseDTO } from '../types'
+import KnowledgeFormModal from '../components/KnowledgeFormModal.vue'
+import type { KnowledgeResponseDTO, KnowledgeCreateDTO } from '../types'
 
 const knowledges = ref<KnowledgeResponseDTO[]>([])
 const isLoading = ref(true)
 const searchQuery = ref('')
+const isModalOpen = ref(false)
 
 const processedKnowledges = computed(() => {
   return [...knowledges.value].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -42,6 +44,15 @@ const handleToggleFavorite = async (id: number) => {
   }
 }
 
+const handleCreateKnowledge = async (payload: KnowledgeCreateDTO) => {
+  try {
+    const newKnowledge = await knowledgeService.create(payload)
+    knowledges.value = [newKnowledge, ...knowledges.value]
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 watch(searchQuery, () => {
   fetchKnowledges()
 })
@@ -53,7 +64,7 @@ onMounted(() => {
 
 <template>
   <div class="flex min-h-screen bg-[#f8fafc] text-slate-900 font-sans antialiased">
-    <Sidebar currentRoute="knowledge" />
+    <Sidebar currentRoute="knowledge" @new-knowledge="isModalOpen = true" />
 
     <div class="flex-1 flex flex-col min-w-0">
       <main class="flex-1 p-8 overflow-y-auto">
@@ -92,5 +103,11 @@ onMounted(() => {
         </div>
       </main>
     </div>
+
+    <KnowledgeFormModal 
+      :isOpen="isModalOpen" 
+      @close="isModalOpen = false" 
+      @save="handleCreateKnowledge"
+    />
   </div>
 </template>
