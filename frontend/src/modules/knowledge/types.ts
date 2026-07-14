@@ -1,24 +1,18 @@
-export interface KnowledgeCreateDTO {
-  category: string
+export interface KnowledgeBaseDTO {
   question: string
   answer: string
-  favorite?: boolean
-}
-
-export interface KnowledgeUpdateDTO {
-  category?: string
-  question?: string
-  answer?: string
-  favorite?: boolean
-}
-
-export interface KnowledgeResponseDTO {
-  id: number
   category: string
-  question: string
-  answer: string
   favorite: boolean
+}
+
+export interface KnowledgeCreateDTO extends KnowledgeBaseDTO {}
+
+export interface KnowledgeUpdateDTO extends KnowledgeBaseDTO {}
+
+export interface KnowledgeResponseDTO extends KnowledgeBaseDTO {
+  id: number
   created_at: string
+  updated_at: string
 }
 
 export interface KnowledgeFilters {
