@@ -1,8 +1,15 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import { BookOpen } from '@lucide/vue'
 import BaseButton from '../../../core/components/BaseButton.vue'
 import HeroSection from '../components/HeroSection.vue'
 import FeaturesSection from '../components/FeaturesSection.vue'
+
+const router = useRouter()
+
+const handleLoginRedirect = () => {
+  router.push({ name: 'knowledge' })
+}
 </script>
 
 <template>
@@ -24,7 +31,11 @@ import FeaturesSection from '../components/FeaturesSection.vue'
       </div>
 
       <div class="flex items-center gap-4">
-        <BaseButton variant="secondary" class="h-9.5! px-4 rounded-lg border-blue-500! text-blue-400! hover:bg-blue-500/10!">
+        <BaseButton 
+          @click="handleLoginRedirect"
+          variant="secondary" 
+          class="h-9.5! px-4 rounded-lg border-blue-500! text-blue-400! hover:bg-blue-500/10!"
+        >
           Entrar
         </BaseButton>
       </div>
