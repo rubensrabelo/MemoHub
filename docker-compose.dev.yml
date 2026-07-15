@@ -19,17 +19,41 @@ services:
 
   backend_api:
     build:
-      context: ./backend
+      context: ./apps/backend
       dockerfile: Dockerfile
     container_name: memo_hub_api
     restart: always
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://app_user:app_password@postgres_db:5432/memo_hub_db
+      - PYTHONPATH=/app
+      - DATABASE_URL=${DATABASE_URL}
     depends_on:
       postgres_db:
         condition: service_healthy
+
+  frontend_web:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL}
+    container_name: memo_hub_web
+    restart: always
+    depends_on:
+      - backend_api
+
+  nginx_proxy:
+    image: nginx:1.27-alpine
+    container_name: memo_hub_proxy
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./infra/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend_web
+      - backend_api
 
 volumes:
   postgres_dev_data:
