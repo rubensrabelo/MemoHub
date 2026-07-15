@@ -6,8 +6,6 @@ services:
       POSTGRES_USER: app_user
       POSTGRES_PASSWORD: app_password
       POSTGRES_DB: memo_hub_db
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_dev_data:/var/lib/postgresql
     healthcheck:
@@ -23,23 +21,25 @@ services:
       dockerfile: Dockerfile
     container_name: memo_hub_api
     restart: always
-    ports:
-      - "8000:8000"
+    env_file:
+      - .env
     environment:
       - PYTHONPATH=/app
-      - DATABASE_URL=${DATABASE_URL}
     depends_on:
       postgres_db:
         condition: service_healthy
 
   frontend_web:
+    env_file:
+      - .env
     build:
       context: ./apps/frontend
       dockerfile: Dockerfile
       args:
         - VITE_API_URL=${VITE_API_URL}
     container_name: memo_hub_web
-    restart: always
+    volumes:
+      - frontend_dist:/app/dist
     depends_on:
       - backend_api
 
@@ -51,9 +51,11 @@ services:
       - "80:80"
     volumes:
       - ./infra/nginx.conf:/etc/nginx/nginx.conf:ro
+      - frontend_dist:/usr/share/nginx/html:ro
     depends_on:
       - frontend_web
       - backend_api
 
 volumes:
   postgres_dev_data:
+  frontend_dist:

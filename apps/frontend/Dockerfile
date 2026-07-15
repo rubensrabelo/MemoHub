@@ -1,4 +1,4 @@
-# Estagio 1: Construtor (Builder)
+# Camada 1: Construtor (Builder)
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -9,13 +9,13 @@ RUN npm ci
 
 COPY . .
 
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
 RUN npm run build
 
 # --- TRANSICAO: ESTAGIO DE EXECUCAO ---
-FROM nginx:1.27-alpine
-
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+FROM alpine:latest
+WORKDIR /app
+COPY --from=builder /app/dist /app/dist
+CMD ["tail", "-f", "/dev/null"]
