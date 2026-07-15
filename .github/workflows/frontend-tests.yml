@@ -5,11 +5,13 @@ on:
     branches: [ main, dev ]
     paths:
       - 'apps/frontend/**'
+      - '!apps/frontend/README.md'
       - '.github/workflows/frontend-tests.yml'
   pull_request:
     branches: [ main, dev ]
     paths:
       - 'apps/frontend/**'
+      - '!apps/frontend/README.md'
 
 jobs:
   frontend-test:

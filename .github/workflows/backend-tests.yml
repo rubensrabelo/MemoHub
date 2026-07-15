@@ -5,11 +5,13 @@ on:
     branches: [ main, dev ]
     paths:
       - 'apps/backend/**'
+      - '!apps/backend/README.md'
       - '.github/workflows/backend-tests.yml'
   pull_request:
     branches: [ main, dev ]
     paths:
       - 'apps/backend/**'
+      - '!apps/backend/README.md'
 
 jobs:
   backend-test:
