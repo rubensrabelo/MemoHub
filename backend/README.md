@@ -41,6 +41,38 @@ tests/
 
 ---
 
+## Fluxo da Arquitetura do Sistema
+
+O diagrama abaixo detalha o fluxo de dados desde a entrada das requisições via API Gateway, passando pelas validações, processamento lógico de serviços, até a persistência assíncrona no PostgreSQL.
+
+```mermaid
+graph TD
+    subgraph Routing_Layer [Camada de Roteamento]
+        Main[Ponto de Entrada:<br/>main.py]
+        Router[API Router:<br/>modules/knowledge/router.py]
+    end
+
+    subgraph Logic_Layer [Camada de Negócio e DTO]
+        DTO[Validação & Contratos:<br/>modules/knowledge/dtos.py]
+        Service[Camada de Serviços:<br/>modules/knowledge/service.py]
+    end
+
+    subgraph Data_Layer [Camada de Infraestrutura]
+        Session[Sessão Assíncrona:<br/>infra/db/session.py]
+        Engine[Driver Conector:<br/>asyncpg / SQLModel]
+        DB[(Banco de Dados:<br/>PostgreSQL)]
+    end
+
+    Main --> Router
+    Router -->|Injeta e Valida| DTO
+    Router --> Service
+    Service -->|Abre Transação| Session
+    Session --> Engine
+    Engine --> DB
+```
+
+---
+
 ## Diagrama de Classes (Domínio de Negócio)
 
 ```mermaid
