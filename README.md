@@ -6,6 +6,24 @@ O **MemoHub** é uma aplicação web projetada para centralizar, organizar e rec
 
 ---
 
+## Estrutura do Repositório (Monorepo)
+
+O ecossistema adota uma arquitetura de Monorepo unificada, separando os códigos das aplicações, bibliotecas compartilhadas e scripts automatizados de provisionamento e infraestrutura.
+
+```text
+meu-projeto-monorepo/
+├── .github/                 # Workflows de CI/CD (GitHub Actions)
+├── apps/                    # Aplicações em si
+│   ├── backend/             # Código da sua API (FastAPI)
+│   └── frontend/            # Código da interface (Vue 3)
+├── packages/                # Bibliotecas ou pacotes compartilhados
+└── infra/                   # Infraestrutura e Configuração
+    ├── terraform/           # Scripts de provisionamento de cloud (AWS)
+    └── ansible/             # Playbooks para configuração de servidores
+```
+
+---
+
 ## Funcionalidades
 
 * **Gerenciamento de Conhecimento:** Criação, leitura, atualização e exclusão (CRUD) de registros.
@@ -18,7 +36,6 @@ O **MemoHub** é uma aplicação web projetada para centralizar, organizar e rec
 
 ## Exemplos Práticos
 
-
 | Categoria | Pergunta | Resposta |
 | :--- | :--- | :--- |
 | Programação | Como criar uma rota GET utilizando FastAPI? | Utilize o decorador `@app.get()` para definir uma rota que responda às requisições HTTP GET. |
@@ -29,19 +46,19 @@ O **MemoHub** é uma aplicação web projetada para centralizar, organizar e rec
 ## Stack Tecnológica
 
 ### Backend
-[Para saber mais](./backend/README.md)
+[Para saber mais](./apps/backend/README.md)
 
 ### Frontend
-[Para saber mais](./frontend/README.md)
+[Para saber mais](./apps/frontend/README.md)
 
 ### Infraestrutura & DevOps
-[Para saber mais](./backend/README.md)
+[Para saber mais](./apps/backend/README.md)
 
 ---
 
 ## Arquitetura do Sistema
 
-A aplicação adota o padrão de **Monolito Modular** no backend, mantendo os domínios de negócio isolados em pacotes auto-contidos para facilitar a coesão e simplificar futuras expansões.
+A infraestrutura utiliza o **Nginx** atuando como servidor de arquivos e Proxy Reverso na ponta de entrada da máquina virtual, gerenciando o tráfego de rede e roteando as requisições HTTP de forma segura para os containers internos.
 
 ```mermaid
 graph TD
@@ -49,12 +66,14 @@ graph TD
     classDef router fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5a20;
     classDef domain fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100;
     classDef db fill:#ede7f6,stroke:#7e57c2,stroke-width:2px,color:#4a148c;
-    classDef infra fill:#f5f5f5,stroke:#9e9e9e,stroke-width:2px,color:#212121;
+    classDef proxy fill:#fce4ec,stroke:#d81b60,stroke-width:2px,color:#880e4f;
 
     Frontend[Frontend Vue.js + Axios]:::client
     Swagger[Swagger UI Docs]:::client
 
     subgraph AWS_EC2 [AWS EC2 Instance]
+        Nginx[Proxy Reverso:<br/>Nginx]:::proxy
+
         subgraph Docker_Container [Docker Container]
             subgraph Backend_FastAPI [Monolito Modular - FastAPI]
                 Main[main.py]
@@ -75,8 +94,9 @@ graph TD
 
     Postgres[(PostgreSQL - AWS RDS)]:::db
 
-    Frontend -->|Chamadas HTTP /api/v1| Main
-    Swagger -->|Testes de Endpoints| Main
+    Frontend -->|Chamadas HTTP| Nginx
+    Swagger -->|Testes de Endpoints| Nginx
+    Nginx -->|Proxy Pass /api/v1| Main
     Main -->|Registra Rotas| Router
     Router -->|Injeta Dependência| Session
     Router -->|Valida Dados| DTOs
