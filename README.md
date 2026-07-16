@@ -8,18 +8,18 @@ O **MemoHub** é uma aplicação web projetada para centralizar, organizar e rec
 
 ## Estrutura do Repositório (Monorepo)
 
-O ecossistema adota uma arquitetura de Monorepo unificada, separando os códigos das aplicações, bibliotecas compartilhadas e scripts automatizados de provisionamento e infraestrutura.
+O ecossistema adota uma arquitetura de Monorepo unificada, separando os códigos das aplicações, as automações de CI/CD e as configurações estruturais de infraestrutura local e em nuvem.
 
 ```text
-meu-projeto-monorepo/
-├── .github/                 # Workflows de CI/CD (GitHub Actions)
-├── apps/                    # Aplicações em si
-│   ├── backend/             # Código da sua API (FastAPI)
-│   └── frontend/            # Código da interface (Vue 3)
-├── packages/                # Bibliotecas ou pacotes compartilhados
-└── infra/                   # Infraestrutura e Configuração
-    ├── terraform/           # Scripts de provisionamento de cloud (AWS)
-    └── ansible/             # Playbooks para configuração de servidores
+MemoHub/
+├── .github/                 # Estrutura de automação e integração contínua
+│   └── workflows/           # Arquivos de esteira de testes e deploys (GitHub Actions)
+├── apps/                    # Aplicações do ecossistema
+│   ├── backend/             # Código da API (FastAPI em Container Docker)
+│   └── frontend/            # Código da interface de usuário (Vue 3 / Vite)
+└── infra/                   # Infraestrutura, Orquestração e Configuração
+    ├── nginx.conf           # Arquivo de roteamento do servidor local (nginx.conf)
+    └── terraform/           # Scripts de automação multicloud PaaS
 ```
 
 ---
@@ -43,7 +43,7 @@ meu-projeto-monorepo/
 
 ---
 
-## Stack Tecnológica
+## Stack Tecnológica e Links de Referência
 
 ### Backend
 [Para saber mais](./apps/backend/README.md)
@@ -51,62 +51,96 @@ meu-projeto-monorepo/
 ### Frontend
 [Para saber mais](./apps/frontend/README.md)
 
-### Infraestrutura & DevOps
-[Para saber mais](./apps/backend/README.md)
+### Infraestrutura & DevOps (Terraform)
+[Para saber mais](./infra/README.md)
 
 ---
 
-## Arquitetura do Sistema
+## Ambiente de Desenvolvimento Local (Docker Compose & Nginx)
 
-A infraestrutura utiliza o **Nginx** atuando como servidor de arquivos e Proxy Reverso na ponta de entrada da máquina virtual, gerenciando o tráfego de rede e roteando as requisições HTTP de forma segura para os containers internos.
+Para fins de desenvolvimento e testes na máquina local, o projeto utiliza um ecossistema totalmente conteinerizado via Docker Compose. Essa arquitetura espelha um Proxy Reverso com **Nginx** na ponta de entrada mapeando as requisições de portas locais e isolando as redes internas.
+
+O fluxo de dados no ambiente de desenvolvimento local opera horizontalmente da seguinte forma:
 
 ```mermaid
-graph TD
+graph LR
+    classDef client fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b;
+    classDef proxy fill:#fce4ec,stroke:#d81b60,stroke-width:2px,color:#880e4f;
+    classDef container fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5a20;
+    classDef db fill:#ede7f6,stroke:#7e57c2,stroke-width:2px,color:#4a148c;
+
+    User[Navegador do Usuario:<br/>localhost]:::client
+
+    subgraph Docker_Compose_Dev [Ambiente Local: docker-compose.dev.yml]
+        Nginx[Servidor Nginx:<br/>infra/nginx/nginx.conf]:::proxy
+        Frontend[Container Web:<br/>apps/frontend]:::container
+        Backend[Container API:<br/>apps/backend]:::container
+        Postgres[(Container DB:<br/>PostgreSQL Local)]:::db
+    end
+
+    User -->|Acessa Porta 80| Nginx
+    Nginx -->|Roteia /| Frontend
+    Nginx -->|Proxy Pass /api/v1| Backend
+    Backend -->|Persistencia Estática| Postgres
+```
+
+### Como Executar o Ambiente Local
+
+Certifique-se de possuir o Docker e o Docker Compose instalados na sua máquina. A partir da raiz do monorepo, execute o comando abaixo para construir as imagens e subir os containers em segundo plano:
+
+```bash
+docker compose -f docker-compose.dev.yml up --build -d
+```
+
+A aplicação estará disponível para acesso no seu navegador através do endereço `http://localhost`.
+
+---
+
+## Arquitetura de Produção e Fluxo de Dados
+
+Quando o código é integrado e enviado para o ambiente de produção, o ecossistema abandona a necessidade de gerenciamento manual de instâncias e proxies locais, migrando para uma topologia baseada em Plataforma como Serviço (PaaS) e Banco de Dados Serverless:
+
+```mermaid
+graph LR
     classDef client fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b;
     classDef router fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5a20;
     classDef domain fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100;
     classDef db fill:#ede7f6,stroke:#7e57c2,stroke-width:2px,color:#4a148c;
     classDef proxy fill:#fce4ec,stroke:#d81b60,stroke-width:2px,color:#880e4f;
 
-    Frontend[Frontend Vue.js + Axios]:::client
-    Swagger[Swagger UI Docs]:::client
+    Frontend[Frontend: Vue 3 / Axios]:::client
+    Swagger[Documentação: Swagger UI]:::client
 
-    subgraph AWS_EC2 [AWS EC2 Instance]
-        Nginx[Proxy Reverso:<br/>Nginx]:::proxy
+    subgraph Vercel_Platform [Hospedagem Static Edge - Vercel]
+        Frontend
+    end
 
-        subgraph Docker_Container [Docker Container]
-            subgraph Backend_FastAPI [Monolito Modular - FastAPI]
-                Main[main.py]
-                
-                subgraph Infra_DB [Infraestrutura]
-                    Engine[engine.py]
-                    Session[session.py]
-                end
-
-                subgraph Module_Knowledge [Módulo: Knowledge]
-                    Router[router.py]:::router
-                    DTOs[dtos.py]:::domain
-                    Models[models.py]:::domain
-                end
-            end
+    subgraph Render_Cloud [Ambiente Isolado Docker - Render]
+        Main[Ponto de Entrada:<br/>main.py]:::proxy
+        Router[Rotas HTTP:<br/>router.py]:::router
+        DTOs[Contratos & Validação:<br/>dtos.py]:::domain
+        Models[Entidades SQLModel:<br/>models.py]:::domain
+        
+        subgraph Infra_DB [Gerenciamento I/O]
+            Engine[Conector:<br/>engine.py]
+            Session[Sessão Assíncrona:<br/>session.py]
         end
     end
 
-    Postgres[(PostgreSQL - AWS RDS)]:::db
+    Postgres[(Banco de Dados:<br/>PostgreSQL Serverless Neon)]:::db
 
-    Frontend -->|Chamadas HTTP| Nginx
-    Swagger -->|Testes de Endpoints| Nginx
-    Nginx -->|Proxy Pass /api/v1| Main
-    Main -->|Registra Rotas| Router
-    Router -->|Injeta Dependência| Session
-    Router -->|Valida Dados| DTOs
-    Router -->|Persiste Entidade| Models
+    Frontend -->|Chamadas HTTP via VITE_API_URL| Main
+    Swagger -->|Testes de Endpoints| Main
+    Main --> Router
+    Router --> DTOs
+    Router --> Session
     Session --> Engine
     Engine --> Postgres
+    Router --> Models
 ```
 
 ---
 
 ## Licença e Objetivo
 
-Este projeto possui caráter exclusivamente acadêmico. Ele foi idealizado e construído como ferramenta prática para o domínio do desenvolvimento Full Stack unindo as tecnologias FastAPI, Vue.js, conteinerização isolada com Docker e deploys automatizados na infraestrutura da AWS usando GitHub Actions.
+Este projeto possui caráter exclusivamente acadêmico. Ele foi idealizado e construído como ferramenta prática para o domínio do desenvolvimento Full Stack unindo as tecnologias FastAPI, Vue.js, conteinerização isolada com Docker através do gerenciador de pacotes uv, e automação completa de ambientes multi-plataforma em nuvem com o Terraform.
