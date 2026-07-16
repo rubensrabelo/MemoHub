@@ -1,0 +1,6 @@
+neon_api_key      = "INSIRA_SEU_TOKEN_DO_NEON_AQUI"
+render_api_key    = "INSIRA_SEU_TOKEN_DO_RENDER_AQUI"
+vercel_api_token  = "INSIRA_SEU_TOKEN_DA_VERCEL_AQUI"
+github_repository = "seu-usuario/seu-repositorio-git"
+
+render_owner_id   = "usr-SEU_ID_REAL_AQUI"
