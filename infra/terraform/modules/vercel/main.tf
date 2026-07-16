@@ -8,10 +8,11 @@ terraform {
 }
 
 resource "vercel_project" "web" {
-  name      = var.project_name
-  framework = "vue"
+  name           = var.project_name
+  framework      = "vue"
   root_directory = "apps/frontend"
 
+  # CORREÇÃO DEFINITIVA: O repositório entra aninhado como objeto do próprio projeto
   git_repository = {
     type = "github"
     repo = var.github_repo

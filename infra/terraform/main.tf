@@ -1,13 +1,13 @@
 module "neon_db" {
   source       = "./modules/neon"
-  project_name = "memohub-prod-db" # Alterado para forçar a criação de um novo banco limpo
+  project_name = "memohub-prod-db"
 }
 
 module "render_backend" {
   source            = "./modules/render"
   service_name      = "my-python-backend-api"
-  database_url      = module.neon_db.connection_string
-  github_repo       = var.github_repository 
+  github_repo       = var.github_repository
+  database_url      = replace(module.neon_db.connection_string, "postgres://", "postgresql+asyncpg://")
 }
 
 module "vercel_frontend" {
