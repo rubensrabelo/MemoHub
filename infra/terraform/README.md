@@ -1,40 +1,180 @@
-# Terraform
+# MemoHub - Infrastructure as Code (Terraform)
 
-Aqui estão os blocos de comandos completamente separados e comentados para você gerenciar o ciclo de vida da sua infraestrutura sem nenhuma confusão.
-Certifique-se de estar dentro da pasta infra/terraform/ no seu terminal antes de executar qualquer um deles.
-------------------------------
-## 🚀 1. COMANDOS PARA SUBIR (Criar toda a infraestrutura)
-Use esta sequência quando quiser limpar os caches antigos locais, ler os arquivos corrigidos e fazer o deploy do zero do Neon DB, Render e Vercel:
+> Camada de orquestração modular, provisionamento e automação da infraestrutura em nuvem.
+
+Este diretório contém o código-fonte dos arquivos de configuração do **Terraform** do **MemoHub**, estruturado sob o conceito de **Infraestrutura como Código (IaC)**. A automação gerencia o ciclo de vida de todo o ecossistema multi-plataforma de servidores e bancos de dados de forma previsível e isolada.
+
+---
+
+## Estrutura de Pastas e Módulos
+
+O projeto utiliza uma arquitetura modularizada para isolar os provedores de nuvem por contextos de responsabilidade técnica, separando as chaves de API globais das configurações internas de recursos de cada plataforma.
+
+```text
+modules/
+├── neon/
+│   ├── main.tf
+│   ├── outputs.tf
+│   └── variables.tf
+├── render/
+│   ├── main.tf
+│   ├── outputs.tf
+│   └── variables.tf
+└── vercel/
+    ├── main.tf
+    ├── outputs.tf
+    └── variables.tf
+main.tf
+providers.tf
+variables.tf
+terraform.tfvars
+```
+
+---
+
+## Fluxo de Orquestração da Infraestrutura
+
+O diagrama abaixo detalha a sequência lógica de criação executada pelo Terraform para construir a topologia do sistema. A saída de dados de um módulo alimenta diretamente os parâmetros de entrada do próximo, estabelecendo uma esteira de dependências lineares disposta horizontalmente.
+
+```mermaid
+graph LR
+    subgraph Contexto_Raiz [Arquivos Globais de Configuração]
+        TFVARS[Chaves Ocultas:<br/>terraform.tfvars]
+        VARS[Definição de Variáveis:<br/>variables.tf]
+        PROV[Provedores de Nuvem:<br/>providers.tf]
+        MAIN[Orquestrador Global:<br/>main.tf]
+    end
+
+    subgraph Modulo_Database [Camada de Dados]
+        NeonDB[Modulo Neon:<br/>modules/neon/main.tf]
+        URI[Output:<br/>connection_string]
+    end
+
+    subgraph Modulo_Backend [Camada de API]
+        RenderAPI[Modulo Render:<br/>modules/render/main.tf]
+        URL_API[Output:<br/>service_url]
+    end
+
+    subgraph Modulo_Frontend [Camada de Interface]
+        VercelWeb[Modulo Vercel:<br/>modules/vercel/main.tf]
+    end
+
+    TFVARS --> VARS
+    VARS --> PROV
+    PROV --> MAIN
+    MAIN --> NeonDB
+    NeonDB -->|Exporta Conexão| URI
+    URI -->|Substitui Prefixo postgresql+asyncpg| RenderAPI
+    RenderAPI -->|Exporta Endpoints| URL_API
+    URL_API -->|Injeta VITE_API_URL e Liga Git| VercelWeb
+```
+
+---
+
+## Arquitetura de Deploys Gerenciada
+
+O diagrama de blocos abaixo descreve como o Terraform se comunica com as APIs das plataformas PaaS e Serverless para provisionar o ambiente físico final de produção na internet.
+
+```mermaid
+graph LR
+    TF[Terraform Core] -->|API Key| Neon[Neon Tech Console]
+    TF -->|API Key + Owner ID| Render[Render Cloud Platform]
+    TF -->|API Token| Vercel[Vercel Dashboard]
+
+    subgraph Neon_Infrastructure [PostgreSQL Serverless]
+        Neon -->|Cria Projeto| DB[(memohub-prod-db)]
+    end
+
+    subgraph Render_Infrastructure [Docker Architecture]
+        Render -->|Clona e Builda apps/backend| Container[FastAPI Web Service]
+    end
+
+    subgraph Vercel_Infrastructure [Vue 3 / Vite Deployment]
+        Vercel -->|Monitora apps/frontend| Project[Vue Client App]
+    end
+```
+
+---
+
+## Tecnologias e Provedores Utilizados
+
+- **Orquestrador Central:** Terraform CLI 1.8.0+
+- **Provedor de Banco de Dados:** kislerdm/neon (Gerenciamento de projetos PostgreSQL Serverless)
+- **Provedor de Servidor de API:** render-oss/render (Provisionamento de serviços baseados em containers Docker)
+- **Provedor de Hospedagem Web:** vercel/vercel (Gerenciamento de ambientes estáticos e variáveis de injeção client-side)
+
+---
+
+## Pré-requisitos e Credenciais
+
+Para executar os planos locais, você deve criar um arquivo de variáveis reais nomeado exatamente como `terraform.tfvars` dentro deste diretório. Este arquivo está catalogado no `.gitignore` raiz e não deve ser enviado ao repositório público.
+
+### Estrutura do Arquivo: `terraform.tfvars`
+
+```hcl
+neon_api_key      = "SUA_API_KEY_DO_NEON"
+render_api_key    = "SUA_API_KEY_DO_RENDER"
+vercel_api_token  = "SUA_API_KEY_DA_VERCEL"
+github_repository = "rubensrabelo/MemoHub"
+render_owner_id   = "tea-SEU_WORKSPACE_ID_DO_RENDER"
+```
+
+Nota: O `render_owner_id` representa o ID de Workspace do Render e deve ser coletado diretamente através da URL do painel logado no seu navegador.
+
+---
+
+## Guia de Operação (Ciclo de Vida)
+
+Sempre execute os comandos listados abaixo a partir deste terminal específico (`infra/terraform/`).
+
+### Como SUBIR a Infraestrutura do Zero
+
+Utilize esta sequência estruturada para expurgar caches residuais, mapear grafos locais e realizar o provisionamento unificado:
 
 ```bash
-# Apaga caches de provedores e planos antigos que falharam
+# Limpa caches locais e arquivos de estado corrompidos
 rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
-# Inicializa o ambiente do zero e baixa os plugins corretos
+
+# Inicializa o projeto baixando os pacotes e provedores oficiais
 terraform init
-# Valida a sintaxe e desenha o plano de criação
+
+# Valida a integridade da sintaxe e exibe o relatório de modificações
 terraform plan
-# Executa o deploy integrado e cria tudo conectado de forma automática
+
+# Executa o deploy integrado criando a topologia conectada
 terraform apply -auto-approve
 ```
 
-------------------------------
-## 🗑️ 2. COMANDOS PARA DESTRUIR (Apagar tudo das nuvens)
-Use esta sequência quando quiser remover completamente todos os recursos criados de dentro das plataformas (Neon, Render e Vercel) para não queimar os limites das suas contas gratuitas, além de limpar o seu computador:
+### Como ATUALIZAR Configurações de Recursos
+
+Caso realize atualizações nas especificações dos arquivos de bloco (como variáveis de ambiente ou diretórios), aplique a sincronização imediata através do comando:
 
 ```bash
-# Deleta de forma limpa e automática o banco, a API e o Front do ar
+terraform apply -auto-approve
+```
+
+### Como DESTRUIR e Limpar o Ambiente
+
+Para remover integralmente todos os recursos alocados nas plataformas de nuvem e encerrar a cobrança e o consumo de cotas gratuitas, execute:
+
+```bash
+# Remove o banco Neon, o container do Render e o projeto da Vercel do ar
 terraform destroy -auto-approve
-# Remove todos os arquivos locais de estado gerados pelo Terraform
+
+# Remove arquivos locais de estado gerados pelo runtime do Terraform
 rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
 ```
 
-------------------------------
-## 🔒 Passo Final no Git (Após o sucesso do deploy)
-Assim que você rodar os comandos para subir e o terminal exibir as mensagens de sucesso em verde, mude para a pasta raiz do monorepo (cd ../..) e salve o código final na sua branch:
+---
 
-git add .
-git commit -m "feat(infra): orchestrate serverless PaaS ecosystem using modular Terraform for Neon, Render, and Vercel"
-git push origin feat/terraform-paas
+## Visualizando as URLs de Produção via Terminal
 
-Salvando o arquivo do Render com o cifrão e rodando o bloco de comandos para subir, o Terraform concluiu a criação de tudo com sucesso?
+Após a validação final do deploy, você pode inspecionar e extrair os endereços gerados dinamicamente pelas plataformas utilizando as variáveis globais de saída expostas:
 
+```bash
+# Imprime o link público do Front-end gerado pela Vercel
+terraform output vercel_frontend_url
+
+# Imprime o link público da API Python gerado pelo Render
+terraform output render_backend_url
+```
