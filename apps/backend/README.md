@@ -106,39 +106,45 @@ classDiagram
 
 ### Tabela: `knowledge`
 
-| Campo | Tipo | Descrição |
-| :--- | :--- | :--- |
-| **id** (PK) | Integer | Identificador único gerado automaticamente (`autoincrement`) |
-| **question** | Text | Pergunta detalhada sobre o assunto |
-| **answer** | Text | Resposta explicativa |
-| **category** | String(100) | Nome do grupo ou categoria de conhecimento |
-| **favorite** | Boolean | Marcador lógico de preferência |
-| **created_at** | Timestamp | Data e hora de criação do registro (Sem Timezone / UTC) |
-| **updated_at** | Timestamp | Data e hora da última modificação (Sem Timezone / UTC) |
+| Campo          | Tipo        | Descrição                                                    |
+| :------------- | :---------- | :----------------------------------------------------------- |
+| **id** (PK)    | Integer     | Identificador único gerado automaticamente (`autoincrement`) |
+| **question**   | Text        | Pergunta detalhada sobre o assunto                           |
+| **answer**     | Text        | Resposta explicativa                                         |
+| **category**   | String(100) | Nome do grupo ou categoria de conhecimento                   |
+| **favorite**   | Boolean     | Marcador lógico de preferência                               |
+| **created_at** | Timestamp   | Data e hora de criação do registro (Sem Timezone / UTC)      |
+| **updated_at** | Timestamp   | Data e hora da última modificação (Sem Timezone / UTC)       |
 
 ---
 
 ## Como Executar o Projeto Localmente
 
 ### Pré-requisitos
+
 Certifique-se de possuir o **PostgreSQL** instalado e ativo, mapeando o fuso horário sem fuso horário estrito (`TIMESTAMP WITHOUT TIME ZONE`), ou utilize o ambiente pré-configurado via Docker Compose.
 
 ### 1. Acessar o Diretório e Instalar Dependências
+
 ```bash
 cd backend/
 uv sync
 ```
 
 ### 2. Executar e Controlar as Migrações de Banco (Alembic)
+
 Para aplicar o histórico estrutural de tabelas no seu banco de dados PostgreSQL ativo, execute:
+
 ```bash
 uv run alembic upgrade head
 ```
 
 ### 3. Executar o Servidor de Desenvolvimento (Uvicorn)
+
 ```bash
 uv run uvicorn src.main:app --reload
 ```
+
 A API estará disponível em `http://127.0.0.1:8000` e a documentação interativa Swagger UI estará acessível em `http://127.0.0`.
 
 ---
@@ -148,13 +154,17 @@ A API estará disponível em `http://127.0.0.1:8000` e a documentação interati
 As configurações e caminhos de execução do interpretador de testes estão centralizados no arquivo `pyproject.toml`.
 
 ### Testes Unitários
+
 Focados no isolamento completo da camada lógica de negócios (`KnowledgeService`) utilizando objetos simulados (mocks) do banco de dados:
+
 ```bash
 uv run pytest tests/unit/
 ```
 
 ### Testes de Integração
+
 Validam o fluxo completo das rotas HTTP simulando requisições contra os endpoints do FastAPI utilizando uma base de dados assíncrona temporária em memória SQLite (`aiosqlite`):
+
 ```bash
 uv run pytest tests/integration/
 ```
@@ -165,11 +175,11 @@ uv run pytest tests/integration/
 
 Todos os endpoints estão prefixados sob o namespace global `/api/v1`.
 
-| Método | Endpoint | Parâmetros Opcionais (Query) | Descrição |
-| :--- | :--- | :--- | :--- |
-| **GET** | `/knowledge/` | `search: str`, `category: str`, `favorite: bool` | Lista e filtra os conhecimentos ativos de forma cronológica inversa |
-| **GET** | `/knowledge/{id}`| — | Busca uma entrada específica por identificador único |
-| **POST** | `/knowledge/` | — | Cria um novo registro de Pergunta → Resposta |
-| **PUT** | `/knowledge/{id}`| — | Atualiza os campos de dados de um registro preservando a data de criação |
-| **PATCH**| `/knowledge/{id}/favorite` | — | Inverte atomicamente o estado de favoritação lógico do registro |
-| **DELETE**| `/knowledge/{id}`| — | Exclui fisicamente a linha correspondente do banco de dados |
+| Método     | Endpoint                   | Parâmetros Opcionais (Query)                     | Descrição                                                                |
+| :--------- | :------------------------- | :----------------------------------------------- | :----------------------------------------------------------------------- |
+| **GET**    | `/knowledge/`              | `search: str`, `category: str`, `favorite: bool` | Lista e filtra os conhecimentos ativos de forma cronológica inversa      |
+| **GET**    | `/knowledge/{id}`          | —                                                | Busca uma entrada específica por identificador único                     |
+| **POST**   | `/knowledge/`              | —                                                | Cria um novo registro de Pergunta → Resposta                             |
+| **PUT**    | `/knowledge/{id}`          | —                                                | Atualiza os campos de dados de um registro preservando a data de criação |
+| **PATCH**  | `/knowledge/{id}/favorite` | —                                                | Inverte atomicamente o estado de favoritação lógico do registro          |
+| **DELETE** | `/knowledge/{id}`          | —                                                | Exclui fisicamente a linha correspondente do banco de dados              |
