@@ -2,7 +2,7 @@ terraform {
   required_providers {
     vercel = {
       source  = "vercel/vercel"
-      version = "~> 1.0"
+      version = "~> 5.4.1"
     }
   }
 }
@@ -12,7 +12,6 @@ resource "vercel_project" "web" {
   framework      = "vue"
   root_directory = "apps/frontend"
 
-  # CORREÇÃO DEFINITIVA: O repositório entra aninhado como objeto do próprio projeto
   git_repository = {
     type = "github"
     repo = var.github_repo
