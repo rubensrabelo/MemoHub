@@ -12,7 +12,7 @@ vi.mock('vue-router', () => ({
 
 const mockApiUrl = 'http://localhost:8000/api/v1/knowledge/'
 
-const mockDatabase = [
+let mockDatabase = [
   {
     id: 1,
     category: 'Frontend',
@@ -50,18 +50,61 @@ const server = setupServer(
 
   http.post(mockApiUrl, async ({ request }) => {
     const body = await request.json() as any
-    return HttpResponse.json({
+    const newRecord = {
       id: 3,
       ...body,
       created_at: '2026-07-15T12:00:00',
       updated_at: '2026-07-15T12:00:00'
-    }, { status: 201 })
+    }
+    mockDatabase.push(newRecord)
+    return HttpResponse.json(newRecord, { status: 201 })
+  }),
+
+  http.put(`${mockApiUrl}:id`, async ({ params, request }) => {
+    const id = Number(params.id)
+    const body = await request.json() as any
+    const updatedRecord = {
+      id,
+      ...body,
+      created_at: '2026-07-15T12:00:00',
+      updated_at: '2026-07-16T12:00:00'
+    }
+    mockDatabase = mockDatabase.map(item => item.id === id ? updatedRecord : item)
+    return HttpResponse.json(updatedRecord)
+  }),
+
+  http.delete(`${mockApiUrl}:id`, ({ params }) => {
+    const id = Number(params.id)
+    mockDatabase = mockDatabase.filter(item => item.id !== id)
+    return new HttpResponse(null, { status: 204 })
   })
 )
 
 describe('KnowledgeListView.vue (Integration)', () => {
-  beforeAll(() => server.listen())
-  afterEach(() => server.resetHandlers())
+  beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
+  afterEach(() => {
+    server.resetHandlers()
+    mockDatabase = [
+      {
+        id: 1,
+        category: 'Frontend',
+        question: 'O que e Vue 3?',
+        answer: 'Um framework progressivo JavaScript.',
+        favorite: false,
+        created_at: '2026-07-15T12:00:00',
+        updated_at: '2026-07-15T12:00:00'
+      },
+      {
+        id: 2,
+        category: 'Backend',
+        question: 'O que e FastAPI?',
+        answer: 'Um framework Python de alta performance.',
+        favorite: true,
+        created_at: '2026-07-14T12:00:00',
+        updated_at: '2026-07-14T12:00:00'
+      }
+    ]
+  })
   afterAll(() => server.close())
 
   it('deve exibir o esqueleto de loading e renderizar os cards apos a resposta da API', async () => {
@@ -103,8 +146,8 @@ describe('KnowledgeListView.vue (Integration)', () => {
     const modalTextareas = wrapper.findAll('.fixed textarea')
     
     await modalInput.setValue('DevOps')
-    await modalTextareas[0].setValue('O que e Docker?')
-    await modalTextareas[1].setValue('Plataforma de conteinerizacao.')
+    await modalTextareas.at(0)!.setValue('O que e Docker?')
+    await modalTextareas.at(1)!.setValue('Plataforma de conteinerizacao.')
 
     const submitButton = wrapper.find('.fixed button.bg-primary')
     await submitButton.trigger('click')
@@ -123,5 +166,41 @@ describe('KnowledgeListView.vue (Integration)', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('Nenhum conhecimento cadastrado no backend.')
+  })
+
+  it('deve abrir o modal populado ao clicar em editar e atualizar as informacoes na tela apos salvar', async () => {
+    const wrapper = mount(KnowledgeListView)
+    await flushPromises()
+
+    const editButton = wrapper.find('button[title="Editar"]')
+    await editButton.trigger('click')
+
+    const modalTextareas = wrapper.findAll('.fixed textarea')
+    const questionTextarea = modalTextareas.at(0)!
+    
+    expect((questionTextarea.element as HTMLTextAreaElement).value).toBe('O que e Vue 3?')
+
+    await questionTextarea.setValue('O que e Vue 3.4?')
+    const submitButton = wrapper.find('.fixed button.bg-primary')
+    await submitButton.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('O que e Vue 3.4?')
+  })
+
+  it('deve remover o registro do layout ao confirmar a acao de exclusao fisica', async () => {
+    vi.spyOn(window, 'confirm').mockImplementation(() => true)
+
+    const wrapper = mount(KnowledgeListView)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('O que e Vue 3?')
+
+    const deleteButton = wrapper.find('button[title="Excluir"]')
+    await deleteButton.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('O que e Vue 3?')
+    expect(wrapper.text()).toContain('O que e FastAPI?')
   })
 })

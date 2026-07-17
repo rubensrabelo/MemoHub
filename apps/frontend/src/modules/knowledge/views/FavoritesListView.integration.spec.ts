@@ -71,6 +71,25 @@ const server = setupServer(
     }
     return HttpResponse.json(newRecord, { status: 201 });
   }),
+
+  http.put(`${mockApiUrl}:id`, async ({ params, request }) => {
+    const id = Number(params.id);
+    const body = (await request.json()) as any;
+    const updatedRecord = {
+      id,
+      ...body,
+      created_at: "2026-07-14T12:00:00",
+      updated_at: "2026-07-16T12:00:00",
+    };
+    mockDatabase = mockDatabase.map((item) => (item.id === id ? updatedRecord : item));
+    return HttpResponse.json(updatedRecord);
+  }),
+
+  http.delete(`${mockApiUrl}:id`, ({ params }) => {
+    const id = Number(params.id);
+    mockDatabase = mockDatabase.filter((item) => item.id !== id);
+    return new HttpResponse(null, { status: 204 });
+  })
 );
 
 describe("FavoritesListView.vue (Integration)", () => {
@@ -107,7 +126,7 @@ describe("FavoritesListView.vue (Integration)", () => {
 
     expect(wrapper.text()).toContain("O que e FastAPI?");
 
-    const starButton = wrapper.find("button.rounded-lg");
+    const starButton = wrapper.find('button[title="Favoritar"]');
     await starButton.trigger("click");
     await flushPromises();
 
@@ -138,5 +157,39 @@ describe("FavoritesListView.vue (Integration)", () => {
     await flushPromises();
 
     expect(wrapper.text()).toContain("O que e SQLModel?");
+  });
+
+  it("deve abrir o modal com dados carregados ao editar e sincronizar a alteracao na tela", async () => {
+    const wrapper = mount(FavoritesListView);
+    await flushPromises();
+
+    const editButton = wrapper.find('button[title="Editar"]');
+    await editButton.trigger("click");
+
+    const modalInput = wrapper.find(".fixed input");
+    expect((modalInput.element as HTMLInputElement).value).toBe("Backend");
+
+    await modalInput.setValue("Python");
+    const submitButton = wrapper.find(".fixed button.bg-primary");
+    await submitButton.trigger("click");
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("Python");
+  });
+
+  it("deve remover o item da tela ao disparar a exclusão física confirmada", async () => {
+    vi.spyOn(window, "confirm").mockImplementation(() => true);
+    
+    const wrapper = mount(FavoritesListView);
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("O que e FastAPI?");
+
+    const deleteButton = wrapper.find('button[title="Excluir"]');
+    await deleteButton.trigger("click");
+    await flushPromises();
+
+    expect(wrapper.text()).not.toContain("O que e FastAPI?");
+    expect(wrapper.text()).toContain("Nenhum conhecimento favoritado no momento.");
   });
 });

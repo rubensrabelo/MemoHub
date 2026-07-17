@@ -47,10 +47,34 @@ describe('KnowledgeCard.vue', () => {
       props: { knowledge: mockKnowledge }
     })
 
-    const favoriteButton = wrapper.find('button.rounded-lg')
+    const favoriteButton = wrapper.find('button[title="Favoritar"]')
     await favoriteButton.trigger('click')
 
     expect(wrapper.emitted('toggle-favorite')).toBeTruthy()
     expect(wrapper.emitted('toggle-favorite')?.[0]).toEqual([42])
+  })
+
+  it('deve emitir o evento edit com o ID correto do conhecimento ao clicar em editar', async () => {
+    const wrapper = mount(KnowledgeCard, {
+      props: { knowledge: mockKnowledge }
+    })
+
+    const editButton = wrapper.find('button[title="Editar"]')
+    await editButton.trigger('click')
+
+    expect(wrapper.emitted('edit')).toBeTruthy()
+    expect(wrapper.emitted('edit')?.[0]).toEqual([42])
+  })
+
+  it('deve emitir o evento delete com o ID correto do conhecimento ao clicar em excluir', async () => {
+    const wrapper = mount(KnowledgeCard, {
+      props: { knowledge: mockKnowledge }
+    })
+
+    const deleteButton = wrapper.find('button[title="Excluir"]')
+    await deleteButton.trigger('click')
+
+    expect(wrapper.emitted('delete')).toBeTruthy()
+    expect(wrapper.emitted('delete')?.[0]).toEqual([42])
   })
 })
