@@ -3,6 +3,16 @@ import { mount } from '@vue/test-utils'
 import KnowledgeFormModal from './KnowledgeFormModal.vue'
 
 describe('KnowledgeFormModal.vue', () => {
+  const mockKnowledge = {
+    id: 42,
+    category: 'Vue 3',
+    question: 'Como funciona a Composition API?',
+    answer: 'Ela organiza a lógica por recursos funcionais.',
+    favorite: true,
+    created_at: '2026-07-15T12:00:00',
+    updated_at: '2026-07-15T12:00:00'
+  }
+
   it('nao deve renderizar o conteudo da modal quando isOpen for false', () => {
     const wrapper = mount(KnowledgeFormModal, {
       props: { isOpen: false }
@@ -76,5 +86,33 @@ describe('KnowledgeFormModal.vue', () => {
     await cancelButton.trigger('click')
 
     expect(wrapper.emitted('close')).toBeTruthy()
+  })
+
+  it('deve preencher o formulario e alterar o texto do botao quando receber a prop knowledge para edicao', () => {
+    const wrapper = mount(KnowledgeFormModal, {
+      props: { isOpen: true, knowledge: mockKnowledge }
+    })
+
+    const input = wrapper.find('input')
+    const textareas = wrapper.findAll('textarea')
+    const submitButton = wrapper.find('button.bg-primary')
+
+    expect(input.element.value).toBe('Vue 3')
+    expect(textareas[0].element.value).toBe('Como funciona a Composition API?')
+    expect(textareas[1].element.value).toBe('Ela organiza a lógica por recursos funcionais.')
+    expect(submitButton.text()).toBe('Salvar alterações')
+  })
+
+  it('deve limpar os campos quando a prop knowledge for alterada para null', async () => {
+    const wrapper = mount(KnowledgeFormModal, {
+      props: { isOpen: true, knowledge: mockKnowledge }
+    })
+
+    expect(wrapper.find('input').element.value).toBe('Vue 3')
+
+    await wrapper.setProps({ knowledge: null })
+
+    expect(wrapper.find('input').element.value).toBe('')
+    expect(wrapper.find('button.bg-primary').text()).toBe('Adicionar conhecimento')
   })
 })
