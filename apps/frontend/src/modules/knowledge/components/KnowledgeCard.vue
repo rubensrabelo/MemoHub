@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { Star, ChevronDown, ChevronUp } from "@lucide/vue";
+import { Star, ChevronDown, ChevronUp, Pencil, Trash2 } from "@lucide/vue";
 import type { KnowledgeResponseDTO } from "../types";
 
 const props = defineProps<{
   knowledge: KnowledgeResponseDTO;
 }>();
 
-const emit = defineEmits(["toggle-favorite"]);
+const emit = defineEmits(["toggle-favorite", "edit", "delete"]);
 
 const isExpanded = ref(false);
 
@@ -27,31 +27,48 @@ const formattedDate = computed(() => {
 
 <template>
   <div
-    class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs transition-all duration-200 hover:shadow-md hover:border-slate-300 flex flex-col h-full justify-between"
+    class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-xs transition-all duration-200 hover:shadow-md hover:border-slate-300 flex flex-col h-full justify-between"
   >
     <div>
-      <div class="flex items-center justify-between gap-4 mb-3">
+      <div class="flex items-start justify-between gap-4 mb-3">
         <span
           class="inline-flex items-center px-3 py-1 bg-blue-500/10 text-primary border border-blue-500/20 rounded-full text-xs font-semibold"
         >
           {{ knowledge.category }}
         </span>
 
-        <button
-          @click.stop="emit('toggle-favorite', knowledge.id)"
-          class="p-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:scale-105 transition-transform cursor-pointer"
-          :class="knowledge.favorite ? 'text-favorite' : 'text-slate-400'"
-        >
-          <Star
-            class="w-4 h-4"
-            :class="{ 'fill-current': knowledge.favorite }"
-          />
-        </button>
+        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <button
+            @click.stop="emit('toggle-favorite', knowledge.id)"
+            class="p-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
+            :class="knowledge.favorite ? 'text-favorite border-favorite/30 bg-favorite/5' : 'text-slate-400'"
+            title="Favoritar"
+          >
+            <Star
+              class="w-4 h-4"
+              :class="{ 'fill-current': knowledge.favorite }"
+            />
+          </button>
+
+          <button
+            @click.stop="emit('edit', knowledge.id)"
+            class="p-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors cursor-pointer"
+            title="Editar"
+          >
+            <Pencil class="w-4 h-4" />
+          </button>
+
+          <button
+            @click.stop="emit('delete', knowledge.id)"
+            class="p-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-red-50 text-slate-500 hover:text-red-600 hover:border-red-200 transition-colors cursor-pointer"
+            title="Excluir"
+          >
+            <Trash2 class="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
-      <h3
-        class="text-base font-bold text-slate-900 leading-snug"
-      >
+      <h3 class="text-base font-bold text-slate-900 leading-snug">
         {{ knowledge.question }}
       </h3>
 

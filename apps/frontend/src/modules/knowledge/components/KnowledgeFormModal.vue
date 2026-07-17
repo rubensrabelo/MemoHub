@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { Star } from '@lucide/vue'
-import type { KnowledgeCreateDTO } from '../types'
+import type { KnowledgeResponseDTO, KnowledgeCreateDTO, KnowledgeUpdateDTO } from '../types'
 
-defineProps<{
+const props = defineProps<{
   isOpen: boolean
+  knowledge?: KnowledgeResponseDTO | null
 }>()
 
 const emit = defineEmits(['close', 'save'])
 
-const form = ref<KnowledgeCreateDTO>({
+const form = ref<KnowledgeCreateDTO | KnowledgeUpdateDTO>({
   category: '',
   question: '',
   answer: '',
@@ -17,6 +18,23 @@ const form = ref<KnowledgeCreateDTO>({
 })
 
 const isSubmitting = ref(false)
+
+watch(
+  () => props.knowledge,
+  (newVal) => {
+    if (newVal) {
+      form.value = {
+        category: newVal.category,
+        question: newVal.question,
+        answer: newVal.answer,
+        favorite: newVal.favorite
+      }
+    } else {
+      form.value = { category: '', question: '', answer: '', favorite: false }
+    }
+  },
+  { immediate: true }
+)
 
 const handleClose = () => {
   form.value = { category: '', question: '', answer: '', favorite: false }
@@ -116,7 +134,7 @@ const handleSubmit = async () => {
           class="h-10 px-4 text-sm font-semibold bg-primary hover:bg-primary-dark text-white rounded-xl cursor-pointer disabled:opacity-50 disabled:pointer-events-none transition-colors shadow-xs flex items-center justify-center"
         >
           <span v-if="isSubmitting" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-          <span v-else>Adicionar conhecimento</span>
+          <span v-else>{{ props.knowledge ? "Salvar alterações" : "Adicionar conhecimento" }}</span>
         </button>
       </div>
 
