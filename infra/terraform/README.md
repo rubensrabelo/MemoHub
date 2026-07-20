@@ -125,44 +125,80 @@ Nota: O `render_owner_id` representa o ID de Workspace do Render e deve ser cole
 
 ## Guia de Operação (Ciclo de Vida)
 
-Sempre execute os comandos listados abaixo a partir deste terminal específico (`infra/terraform/`).
+Você pode gerenciar a infraestrutura de forma automatizada através dos scripts unificados ou manualmente executando comando por comando.
 
-### Como SUBIR a Infraestrutura do Zero
 
-Utilize esta sequência estruturada para expurgar caches residuais, mapear grafos locais e realizar o provisionamento unificado:
+### Opção 1: Operação Automatizada (Via Scripts)
+
+Sempre execute os comandos a partir da **raiz do projeto**.
+
+#### Como subir ou atualizar a infraestrutura
+```bash
+# Concede permissão de execução (necessário apenas na primeira vez)
+chmod +x scripts/deploy.sh
+
+# Executa o ciclo completo (init, fmt, validate, plan, apply e outputs)
+./scripts/deploy.sh
+```
+
+#### Como destruir e limpar o ambiente
+```bash
+# Concede permissão de execução (necessário apenas na primeira vez)
+chmod +x scripts/destroy.sh
+
+# Remove todos os recursos da nuvem e expurga os arquivos gerados
+./scripts/destroy.sh
+```
+
+---
+
+### Opção 2: Operação Manual Passo a Passo
+
+Sempre entre no diretório específico antes de iniciar: `cd infra/terraform/`.
+
+#### Como SUBIR ou ATUALIZAR a Infraestrutura (Idêntico ao script)
+Utilize esta sequência estruturada para garantir a formatação correta, validação de sintaxe e o provisionamento unificado:
 
 ```bash
-# Limpa caches locais e arquivos de estado corrompidos
-rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
-
 # Inicializa o projeto baixando os pacotes e provedores oficiais
 terraform init
 
-# Valida a integridade da sintaxe e exibe o relatório de modificações
-terraform plan
+# Formata recursivamente todos os arquivos de configuração (.tf)
+terraform fmt -recursive
 
-# Executa o deploy integrado criando a topologia conectada
-terraform apply -auto-approve
+# Valida a integridade da sintaxe e a semântica do código
+terraform validate
+
+# Gera o plano de execução salvo
+terraform plan -out=tfplan
+
+# Executa o deploy integrado utilizando o plano gerado
+terraform apply tfplan
+
+# Obtém e exibe as URLs de produção limpas (sem aspas)
+terraform output -raw render_backend_url
+terraform output -raw vercel_frontend_url
 ```
 
-### Como ATUALIZAR Configurações de Recursos
-
-Caso realize atualizações nas especificações dos arquivos de bloco (como variáveis de ambiente ou diretórios), aplique a sincronização imediata através do comando:
-
-```bash
-terraform apply -auto-approve
-```
-
-### Como DESTRUIR e Limpar o Ambiente
-
-Para remover integralmente todos os recursos alocados nas plataformas de nuvem e encerrar a cobrança e o consumo de cotas gratuitas, execute:
+#### Como DESTRUIR e Limpar o Ambiente (Idêntico ao script)
+Para remover integralmente todos os recursos alocados nas plataformas de nuvem e purgar todos os artefatos residuais locais, execute:
 
 ```bash
-# Remove o banco Neon, o container do Render e o projeto da Vercel do ar
-terraform destroy -auto-approve
+# Inicializa para garantir o mapeamento do backend
+terraform init
 
-# Remove arquivos locais de estado gerados pelo runtime do Terraform
-rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
+# Gera o plano de destruição estruturado
+terraform plan -destroy -out=destroy.tfplan
+
+# Executa a remoção do banco Neon, container do Render e projeto Vercel
+terraform apply destroy.tfplan
+
+# Remove todos os arquivos temporários e estados gerados localmente
+rm -f tfplan destroy.tfplan
+rm -rf .terraform
+rm -f .terraform.lock.hcl
+rm -f terraform.tfstate
+rm -f terraform.tfstate.backup
 ```
 
 ---
