@@ -8,6 +8,6 @@ terraform {
 }
 
 resource "neon_project" "db" {
-  name      = var.project_name
+  name                      = var.project_name
   history_retention_seconds = 21600
 }
