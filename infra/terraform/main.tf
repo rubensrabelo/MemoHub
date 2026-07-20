@@ -4,10 +4,10 @@ module "neon_db" {
 }
 
 module "render_backend" {
-  source            = "./modules/render"
-  service_name      = "my-python-backend-api"
-  github_repo       = var.github_repository
-  database_url      = split("?", replace(module.neon_db.connection_string, "postgres://", "postgresql+asyncpg://"))[0]
+  source       = "./modules/render"
+  service_name = "my-python-backend-api"
+  github_repo  = var.github_repository
+  database_url = split("?", replace(module.neon_db.connection_string, "postgres://", "postgresql+asyncpg://"))[0]
 }
 
 module "vercel_frontend" {
